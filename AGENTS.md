@@ -22,7 +22,7 @@
 - Load images via `Picture.draw(g, "file.png", x, y)`; place files in `resources/images/`
 
 ## Testing Guidelines
-- No automated tests in repo; manual checks: menu navigation, gameplay, collisions, boosts, and that `HighScores.txt` updates and keeps top 10
+- JUnit tests added in `test/ScoreTest.java` covering `Score` parsing, sorting, top-N trimming, persistence, defensive copy, and IO error propagation
 - If adding tests, use JUnit in `test/` and name `ClassNameTest.java`; focus on movement, collisions, and score updates
 
 ## Security & Configuration Tips

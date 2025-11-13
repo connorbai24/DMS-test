@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,7 @@ public class Score {
 		this.highs = new ArrayList<Integer>();
 
 		// Read existing high scores; tolerate missing/corrupt lines
-		try (BufferedReader in = Files.newBufferedReader(Path.of(filename), StandardCharsets.UTF_8)) {
+		try (BufferedReader in = Files.newBufferedReader(Paths.get(filename), StandardCharsets.UTF_8)) {
 			String r;
 			int j = 0;
 			while ((r = in.readLine()) != null && j < TOP_N) {
@@ -59,7 +60,7 @@ public class Score {
 		}
 
 		// persist with explicit charset and platform line separator
-		try (BufferedWriter out = Files.newBufferedWriter(Path.of(file), StandardCharsets.UTF_8)) {
+		try (BufferedWriter out = Files.newBufferedWriter(Paths.get(file), StandardCharsets.UTF_8)) {
 			for (int j = 0; j < highs.size(); j++) {
 				out.write(Integer.toString(highs.get(j)));
 				if (j != highs.size() - 1) {
