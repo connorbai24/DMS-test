@@ -1,10 +1,4 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,33 +9,29 @@ public class Score {
 
 	// list of scores (mutable, internal)
 	private final List<Integer> highs;
-	private final String file;
+	private final ScoreRepository repository;
 
 	// constructor creates list of integers from .txt file
 	public Score(String filename) {
-		this.file = filename;
-		this.highs = new ArrayList<Integer>();
+		this(new FileScoreRepository(filename));
+	}
 
-		// Read existing high scores; tolerate missing/corrupt lines
-		try (BufferedReader in = Files.newBufferedReader(Paths.get(filename), StandardCharsets.UTF_8)) {
-			String r;
-			int j = 0;
-			while ((r = in.readLine()) != null && j < TOP_N) {
-				r = r.trim();
-				if (r.isEmpty()) {
-					continue;
-				}
-				try {
-					highs.add(Integer.parseInt(r));
-					j++;
-				} catch (NumberFormatException ignored) {
-					// skip non-integer lines
+	// Alternate constructor for dependency injection/testing
+	public Score(ScoreRepository repository) {
+		this.repository = repository;
+		this.highs = new ArrayList<Integer>();
+		// Read existing high scores; tolerate missing/corrupt lines and IO failures
+		try {
+			List<Integer> loaded = repository.read();
+			if (loaded != null) {
+				for (Integer v : loaded) {
+					if (highs.size() >= TOP_N) break;
+					highs.add(v == null ? 0 : v);
 				}
 			}
 		} catch (IOException e) {
 			// ignore; start with defaults below
 		}
-
 		// Ensure we always have TOP_N entries to match UI expectations
 		while (highs.size() < TOP_N) {
 			highs.add(0);
@@ -59,15 +49,8 @@ public class Score {
 			highs.remove(highs.size() - 1);
 		}
 
-		// persist with explicit charset and platform line separator
-		try (BufferedWriter out = Files.newBufferedWriter(Paths.get(file), StandardCharsets.UTF_8)) {
-			for (int j = 0; j < highs.size(); j++) {
-				out.write(Integer.toString(highs.get(j)));
-				if (j != highs.size() - 1) {
-					out.write(System.lineSeparator());
-				}
-			}
-		}
+		// persist via repository
+		repository.write(highs);
 	}
 
 	// returns a defensive copy of the list of high scores

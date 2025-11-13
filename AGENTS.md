@@ -42,7 +42,9 @@
 - `Shape` and `Line` (src/Shape.java) - `Shape` interface for drawable trail segments; `Line` concrete straight segment used for trails and collision checks.
 - `Intersection` (src/Intersection.java) - Enum for collision result; code uses `NONE` and `UP` to signal no-hit vs hit.
 - `Picture` (src/Picture.java) - Image helper; caches and loads from classpath `/images` (fallback to file) and draws to `Graphics`.
-- `Score` (src/Score.java) - High-score storage; reads top 10 from `HighScores.txt`, inserts and sorts, writes back.
+- `Score` (src/Score.java) - High-score domain/service; maintains top-10 list, sorts/trims, and persists via `ScoreRepository`.
+- `ScoreRepository` (src/ScoreRepository.java) - Persistence port (interface) for reading/writing high scores.
+- `FileScoreRepository` (src/FileScoreRepository.java) - UTF-8 file-backed repository implementation.
 
 ## Score.java Smells & Pattern/Principle Issues
 - Unclosed I/O resources: `BufferedReader` in constructor and `PrintStream` in `addHighScore` are never closed; no try-with-resources, risking leaks and incomplete writes.
@@ -65,4 +67,11 @@
 - Portability: write with `System.lineSeparator()` and explicit charset.
 - Simpler, efficient logic: in-place sort with `reverseOrder()`; avoid `LinkedList` and post-sort reverse.
 - Invariants: constructor pads to `TOP_N` entries so UI assumptions (top 10 present) hold even if the file is short/missing.
-- Reduced mutability: `file` and `highs` are `final`; list contents updated in place instead of reassigning the reference.
+- Reduced mutability: `repository` and `highs` are `final`; list contents updated in place instead of reassigning the reference.
+
+## Score.java Design Pattern Fix (Applied)
+- Applied Repository/DAO pattern: separated persistence concerns from the `Score` domain logic.
+- New interface `ScoreRepository` defines `read()`/`write(List<Integer>)` for storage abstraction.
+- `FileScoreRepository` implements file-based storage with UTF-8 and robust parsing; `Score` depends on the interface, not the concrete class.
+- `Score` gained a DI-friendly constructor `Score(ScoreRepository repo)`; existing `Score(String filename)` remains for convenience and uses `FileScoreRepository` under the hood.
+- External API remains stable: `getHighScores()` and `addHighScore(int)` unchanged for callers (e.g., `TronMapSurvival`).
