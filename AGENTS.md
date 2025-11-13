@@ -43,3 +43,26 @@
 - `Intersection` (src/Intersection.java) - Enum for collision result; code uses `NONE` and `UP` to signal no-hit vs hit.
 - `Picture` (src/Picture.java) - Image helper; caches and loads from classpath `/images` (fallback to file) and draws to `Graphics`.
 - `Score` (src/Score.java) - High-score storage; reads top 10 from `HighScores.txt`, inserts and sorts, writes back.
+
+## Score.java Smells & Pattern/Principle Issues
+- Unclosed I/O resources: `BufferedReader` in constructor and `PrintStream` in `addHighScore` are never closed; no try-with-resources, risking leaks and incomplete writes.
+- Swallowed exceptions and misleading API: constructor and `addHighScore` catch `IOException` and ignore it; `addHighScore` declares `throws IOException` but never actually propagates one, creating a confusing contract.
+- Representation exposure and aliasing: `getHighScores()` returns the mutable internal list; callers can mutate it. `addHighScore` reassigns `highs` to a new list, breaking external references obtained earlier.
+- Magic number `10`: repeated cap for top-N appears in multiple places; should be a single `static final int TOP_N` constant.
+- Input parsing bug: `r.trim();` result is discarded; whitespace is not removed before `Integer.parseInt(r)`, risking `NumberFormatException` on lines with spaces; blank lines are not handled.
+- Platform/encoding assumptions: writes `\n` explicitly and uses default charset via `PrintStream(new File(file))`; prefer `System.lineSeparator()` and an explicit charset for portability.
+- Inefficient collections/algorithm: copies to `LinkedList` then removes by index from the tail (O(n) on `LinkedList`); sorts then reverses instead of sorting with a reverse comparator; an `ArrayList` would be more appropriate here.
+- Weak invariants vs UI expectations: does not ensure the list has 10 entries after load; UI (`TronMapSurvival.getHighs`) assumes 10 and can index out of bounds if fewer lines exist.
+- Mutability that could be `final`: fields `file` and possibly `highs` are reassigned but conceptually constant; reducing mutability would simplify reasoning.
+- Mixed responsibilities: class is both the in-memory model and its persistence mechanism; if following SRP/DAO-Repository patterns strictly, persistence could be separated from the score list model.
+
+## Score.java Smell Fixes (Applied)
+- Resource safety: switched to try-with-resources for read/write; use `Files.newBufferedReader/newBufferedWriter` with `UTF-8` to avoid leaks and encoding drift.
+- Correct API/exception behavior: `addHighScore` now truly propagates `IOException` instead of swallowing; no hidden failures.
+- Defensive copying: `getHighScores()` returns a new `ArrayList` to avoid external mutation/aliasing.
+- Single source of truth: introduced `static final int TOP_N = 10` and used consistently.
+- Robust parsing: actually trim lines, skip blanks and non-integers; avoids `NumberFormatException`.
+- Portability: write with `System.lineSeparator()` and explicit charset.
+- Simpler, efficient logic: in-place sort with `reverseOrder()`; avoid `LinkedList` and post-sort reverse.
+- Invariants: constructor pads to `TOP_N` entries so UI assumptions (top 10 present) hold even if the file is short/missing.
+- Reduced mutability: `file` and `highs` are `final`; list contents updated in place instead of reassigning the reference.
