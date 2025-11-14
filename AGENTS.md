@@ -30,21 +30,22 @@
 - When packaging or deploying, include `resources/images/` on the classpath
 ## Classes & Responsibilities
 
-- `Game` (src/Game.java) - Application entry; builds the Swing UI/menus and wires actions; instantiates `TronMapSurvival`, `TronMapTwoPlayer`, and `TronMapStory` and swaps panels.
-- `TronMap` (src/TronMap.java) - Base panel for game modes; manages players, timer tick loop, Player 1 input, and drawing; provides abstract hooks `tick`, `reset`, `setScore`, `addScore`.
-- `TronMapSurvival` (src/TronMapSurvival.java) - Single-player survival; updates score over time; persists high scores via `Score`; renders Game Over and provides a high-scores panel.
-- `TronMapTwoPlayer` (src/TronMapTwoPlayer.java) - Two human players; adds WASD/Q/1 controls for P2; tracks round wins and displays P1/P2/tie banners.
-- `TronMapStory` (src/TronMapStory.java) - Progressive levels vs AI; spawns more AIs each level; delays between levels; updates score and renders win/over banners.
-- `GameObject` (src/GameObject.java) - Abstract moving entity; holds position, velocity, bounds; movement/clipping and collision vs trail `Shape`s; prevents immediate reverse direction.
-- `Player` (src/Player.java) - Abstract light-cycle; trail path (`Line`s), boost timer, jump mechanic, alive state; implements drawing and crash handling; `move()` deferred to subclasses.
-- `PlayerHuman` (src/PlayerHuman.java) - Human-controlled player; updates movement and merges trail segments; supports jump and boost.
-- `PlayerAI` (src/PlayerAI.java) - Computer player; scans all trails and edges to pick safe turns, occasionally boosts/turns randomly; maintains trail like human.
-- `Shape` and `Line` (src/Shape.java) - `Shape` interface for drawable trail segments; `Line` concrete straight segment used for trails and collision checks.
-- `Intersection` (src/Intersection.java) - Enum for collision result; code uses `NONE` and `UP` to signal no-hit vs hit.
-- `Picture` (src/Picture.java) - Image helper; caches and loads from classpath `/images` (fallback to file) and draws to `Graphics`.
-- `Score` (src/Score.java) - High-score domain/service; maintains top-10 list, sorts/trims, and persists via `ScoreRepository`.
-- `ScoreRepository` (src/ScoreRepository.java) - Persistence port (interface) for reading/writing high scores.
-- `FileScoreRepository` (src/FileScoreRepository.java) - UTF-8 file-backed repository implementation.
+- `Game` (src/Game.java) - Application entry; builds the Swing UI/menus and wires actions; instantiates modes and swaps panels; ctors: default; methods: `run()`, `main(String[] args)`.
+- `TronMap` (src/TronMap.java) - Abstract base for game modes; manages players, timer loop, P1 input, and drawing; ctors: `TronMap(JLabel sco1, JLabel sco2, int p)`; methods: `getRandomStart()`, `getVelocity()`, `tick()`, `reset()`, `setScore()`, `addScore()`, `paintComponent(Graphics)`, `getPreferredSize()`.
+- `TronMapSurvival` (src/TronMapSurvival.java) - Single-player survival; updates score over time; persists via `Score`; ctors: `TronMapSurvival(JLabel sco1, int p)`; methods: `tick()`, `setScore()`, `reset()`, `addScore()`, `getHighs()`, `paintComponent(Graphics)`.
+- `TronMapTwoPlayer` (src/TronMapTwoPlayer.java) - Two-player mode with P2 controls; tracks round wins and banners; ctors: `TronMapTwoPlayer(JLabel sco1, JLabel sco2, int p)`; methods: `tick()`, `restartGame()`, `setScore()`, `reset()`, `addScore()`, `paintComponent(Graphics)`.
+- `TronMapStory` (src/TronMapStory.java) - Progressive levels vs AI; delays between levels; ctors: `TronMapStory(JLabel sco1, JLabel sco2, int p)`; methods: `tick()`, `setScore()`, `nextLevel()`, `addPlayers()`, `reset()`, `addScore()`, `paintComponent(Graphics)`.
+- `GameObject` (src/GameObject.java) - Abstract moving entity; position, velocity, bounds; collision helpers; ctors: `GameObject(int x, int y, int velocityX, int velocityY, int width, int height)`; methods: `setBounds(int,int)`, `setXVelocity(int)`, `setYVelocity(int)`, `move()`, `clip()`, `intersects(GameObject)`, `accelerate()`, `draw(Graphics)`, `getAlive()`, `getPath()`.
+- `Player` (src/Player.java) - Abstract light-cycle; trail (`Line`s), boost/jump, alive state; ctors: `Player(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `getBoostsLeft()`, `accelerate()`, `jump()`, `startBoost()`, `boost()`, `draw(Graphics)`, `getAlive()`, `getPath()`, `crash(Intersection)`, `move()`, `addPlayers(Player[])`.
+- `PlayerHuman` (src/PlayerHuman.java) - Human-controlled; merges trail segments; ctors: `PlayerHuman(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `addPlayers(Player[])`, `move()`.
+- `PlayerAI` (src/PlayerAI.java) - Computer player; scans trails/edges, random boosts/turns; ctors: `PlayerAI(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `addPlayers(Player[])`, `move()`, private `reactProximity()`.
+- `Shape` (src/Shape.java) - Drawable trail segment interface; methods: `draw(java.awt.Graphics)`, `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
+- `Line` (src/Shape.java) - Concrete straight segment used for trails; ctors: `Line(int x, int y, int x2, int y2)`; methods: `draw(java.awt.Graphics)`, `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
+- `Intersection` (src/Intersection.java) - Collision result enum; constants: `NONE`, `UP`, `LEFT`, `DOWN`, `RIGHT`.
+- `Picture` (src/Picture.java) - Image helper; caches and loads from classpath `/images` (fallback to file); methods: static `draw(java.awt.Graphics g, String filepath, int x, int y)`.
+- `Score` (src/Score.java) - High-score domain/service; maintains top-10, sorts/trims, persists via repository; ctors: `Score(String filename)`, `Score(ScoreRepository repository)`; methods: `addHighScore(int) throws java.io.IOException`, `getHighScores()`.
+- `ScoreRepository` (src/ScoreRepository.java) - Persistence port for high scores; methods: `read() throws java.io.IOException`, `write(java.util.List<Integer>) throws java.io.IOException`.
+- `FileScoreRepository` (src/FileScoreRepository.java) - UTF-8 file-backed repository; ctors: `FileScoreRepository(String file)`; methods: `read() throws java.io.IOException`, `write(java.util.List<Integer>) throws java.io.IOException`.
 
 ## Score.java Smells & Pattern/Principle Issues
 - Unclosed I/O resources: `BufferedReader` in constructor and `PrintStream` in `addHighScore` are never closed; no try-with-resources, risking leaks and incomplete writes.
