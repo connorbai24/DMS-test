@@ -53,6 +53,16 @@
 - `ScoreRepository` (src/ScoreRepository.java) - Persistence port for high scores; methods: `read() throws java.io.IOException`, `write(java.util.List<Integer>) throws java.io.IOException`.
 - `FileScoreRepository` (src/FileScoreRepository.java) - UTF-8 file-backed repository; ctors: `FileScoreRepository(String file)`; methods: `read() throws java.io.IOException`, `write(java.util.List<Integer>) throws java.io.IOException`.
 
+## Picture.java Smells & Pattern/Principle Issues
+- Resource leak: `InputStream` from `getResourceAsStream` is not closed; `ImageIO.read(InputStream)` does not close it.
+- Null caching bug: if loading fails, `img` can be null but still inserted into `cache`, causing permanent null lookups and likely `NullPointerException` on draw.
+- Weak error handling: catches `IOException` and prints only the message to stderr; loses stack trace and leaves callers with unclear state.
+- Unbounded, unsynchronized static cache: no eviction or thread-safety; risk of memory growth and races off the EDT.
+- I/O during painting: first call may do blocking I/O on the EDT; violates UI responsiveness guidance.
+- Fallback to filesystem path: conflicts with the guideline to rely on classpath resources; hurts portability/packaging.
+- Utility-class design: class is instantiable and holds mutable global state; prefer a non-instantiable utility (`final` with private ctor) or a dedicated loader service.
+- Magic string: hard-coded `\"/images/\"` path; should be a constant.
+- Parameter validation gaps: no null/empty check for `filepath` and `Graphics` arg; possible NPEs with poor diagnostics.
 ## Score.java Smells & Pattern/Principle Issues
 - Unclosed I/O resources: `BufferedReader` in constructor and `PrintStream` in `addHighScore` are never closed; no try-with-resources, risking leaks and incomplete writes.
 - Swallowed exceptions and misleading API: constructor and `addHighScore` catch `IOException` and ignore it; `addHighScore` declares `throws IOException` but never actually propagates one, creating a confusing contract.
