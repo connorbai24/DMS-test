@@ -106,7 +106,7 @@ public abstract class Player extends GameObject {
 		g.setColor(color);
 		g.fillRect(x - WIDTH/2, y - HEIGHT/2, WIDTH, HEIGHT);
 		for (Shape k: lines) {
-			k.draw(g);
+			AwtLineDrawer.draw((Line) k, g);;
 		}
 	}
 	
