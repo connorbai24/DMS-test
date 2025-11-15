@@ -63,6 +63,14 @@
 - Utility-class design: class is instantiable and holds mutable global state; prefer a non-instantiable utility (`final` with private ctor) or a dedicated loader service.
 - Magic string: hard-coded `\"/images/\"` path; should be a constant.
 - Parameter validation gaps: no null/empty check for `filepath` and `Graphics` arg; possible NPEs with poor diagnostics.
+
+## Picture.java Smell Fixes (Applied)
+- Utility class: made `Picture` final with a private constructor.
+- Resource handling: use try-with-resources to close `InputStream` from classpath loads.
+- Cache robustness: replaced unbounded `HashMap` with a small synchronized LRU cache (capacity 64); avoid caching nulls.
+- Error handling: print concise diagnostics including exception type; avoid NPE by returning when load fails.
+- Constants and validation: introduced `CLASSPATH_IMAGES` constant; added null/empty checks for `Graphics` and `filepath`.
+- Behavior: preserved classpath-first, filesystem-fallback loading; first draw may do I/O, subsequent draws use the cache.
 ## Score.java Smells & Pattern/Principle Issues
 - Unclosed I/O resources: `BufferedReader` in constructor and `PrintStream` in `addHighScore` are never closed; no try-with-resources, risking leaks and incomplete writes.
 - Swallowed exceptions and misleading API: constructor and `addHighScore` catch `IOException` and ignore it; `addHighScore` declares `throws IOException` but never actually propagates one, creating a confusing contract.
