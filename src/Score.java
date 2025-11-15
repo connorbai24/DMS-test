@@ -11,15 +11,18 @@ public class Score {
 	private final List<Integer> highs;
 	private final ScoreRepository repository;
 
-	// constructor creates list of integers from .txt file
-	public Score(String filename) {
-		this(new FileScoreRepository(filename));
-	}
+    // constructor creates list of integers from a file
+    public Score(String filename) {
+        this(createFileRepository(filename));
+    }
 
 	// Alternate constructor for dependency injection/testing
-	public Score(ScoreRepository repository) {
-		this.repository = repository;
-		this.highs = new ArrayList<Integer>();
+    public Score(ScoreRepository repository) {
+        if (repository == null) {
+            throw new IllegalArgumentException("repository must not be null");
+        }
+        this.repository = repository;
+        this.highs = new ArrayList<Integer>();
 		// Read existing high scores; tolerate missing/corrupt lines and IO failures
 		try {
 			List<Integer> loaded = repository.read();
@@ -40,8 +43,8 @@ public class Score {
 
 	// adds a new score into the list, sorts the list,
 	// and updates the .txt file
-	public void addHighScore(int i) throws IOException {
-		highs.add(i);
+    public void addHighScore(int score) throws IOException {
+        highs.add(score);
 		// sort descending in-place
 		highs.sort(Collections.reverseOrder());
 		// trim to TOP_N
@@ -57,4 +60,12 @@ public class Score {
 	public List<Integer> getHighScores() {
 		return new ArrayList<Integer>(highs);
 	}
+
+    // helper to validate and create repository while keeping 'this(...)' first in ctor
+    private static ScoreRepository createFileRepository(String filename) {
+        if (filename == null) {
+            throw new IllegalArgumentException("filename must not be null");
+        }
+        return new FileScoreRepository(filename);
+    }
 }

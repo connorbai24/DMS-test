@@ -13,9 +13,13 @@ public class FileScoreRepository implements ScoreRepository {
     private final String file;
 
     public FileScoreRepository(String file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("file path must not be null/empty");
+        }
         this.file = file;
     }
 
+    @Override
     public List<Integer> read() throws IOException {
         List<Integer> out = new ArrayList<Integer>();
         try (BufferedReader in = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8)) {
@@ -33,7 +37,11 @@ public class FileScoreRepository implements ScoreRepository {
         return out;
     }
 
+    @Override
     public void write(List<Integer> scores) throws IOException {
+        if (scores == null) {
+            throw new IllegalArgumentException("scores must not be null");
+        }
         try (BufferedWriter out = Files.newBufferedWriter(Paths.get(file), StandardCharsets.UTF_8)) {
             for (int i = 0; i < scores.size(); i++) {
                 out.write(Integer.toString(scores.get(i)));

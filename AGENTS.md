@@ -14,15 +14,19 @@
   - Windows: `java -cp "out\classes;resources" Game`
   - macOS/Linux: `java -cp "out/classes:resources" Game`
 - IDE: open `tron-master.iml` in IntelliJ IDEA; mark `resources` as Resources Root
+## Java Version Requirement
+- Requires JDK 21 for build/run. Code and tests avoid newer APIs (for example, `Path.of`, `var`) and use `Paths.get`/explicit types for compatibility.
 
 ## Coding Style & Naming Conventions
-- Java 8+; tabs for indentation; braces on same line
+- Java 21 (LTS); tabs for indentation; braces on same line
 - Classes `UpperCamelCase`; methods/fields `lowerCamelCase`; constants `UPPER_SNAKE_CASE`
 - Keep UI work on the EDT (`SwingUtilities.invokeLater`); avoid long tasks on the EDT
 - Load images via `Picture.draw(g, "file.png", x, y)`; place files in `resources/images/`
 
 ## Testing Guidelines
 - JUnit tests added in `test/ScoreTest.java` covering `Score` parsing, sorting, top-N trimming, persistence, defensive copy, and IO error propagation
+- JUnit tests added in `test/FileScoreRepositoryTest.java` covering `FileScoreRepository` read/write happy paths, invalid input handling, and IO errors
+- JUnit tests added in `test/ScoreRepositoryTest.java` with an in-memory stub that exercises the repository contract (round-trip, null handling, defensive copy)
 - If adding tests, use JUnit in `test/` and name `ClassNameTest.java`; focus on movement, collisions, and score updates
 
 ## Security & Configuration Tips
@@ -69,6 +73,7 @@
 - Simpler, efficient logic: in-place sort with `reverseOrder()`; avoid `LinkedList` and post-sort reverse.
 - Invariants: constructor pads to `TOP_N` entries so UI assumptions (top 10 present) hold even if the file is short/missing.
 - Reduced mutability: `repository` and `highs` are `final`; list contents updated in place instead of reassigning the reference.
+ - Exception policy: `addHighScore` propagates `IOException`; constructor intentionally tolerates read errors and starts with defaults to keep the app usable. This is documented behavior, not a swallowed failure.
 
 ## Score.java Design Pattern Fix (Applied)
 - Applied Repository/DAO pattern: separated persistence concerns from the `Score` domain logic.
@@ -76,3 +81,8 @@
 - `FileScoreRepository` implements file-based storage with UTF-8 and robust parsing; `Score` depends on the interface, not the concrete class.
 - `Score` gained a DI-friendly constructor `Score(ScoreRepository repo)`; existing `Score(String filename)` remains for convenience and uses `FileScoreRepository` under the hood.
 - External API remains stable: `getHighScores()` and `addHighScore(int)` unchanged for callers (e.g., `TronMapSurvival`).
+
+## Testing Strategy (Score & Repository)
+- Score (domain): construct with temp files and with a stub `ScoreRepository`; verify load/pad to 10, robust parsing, descending sort/trim on insert, persistence call, defensive copy, and that IOExceptions from persistence propagate from `addHighScore`.
+- FileScoreRepository (persistence): use temp files/dirs; verify trimming and skipping invalid lines on read; verify write produces exact lines in UTF-8 with platform separators; assert constructor rejects null/empty path; assert read errors surface for missing file/dir; assert `write(null)` throws.
+- ScoreRepository (interface): validate a minimal in-memory implementation round-trips values, rejects null writes, and returns defensive copies to prevent external mutation.

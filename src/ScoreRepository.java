@@ -3,7 +3,8 @@ import java.util.List;
 
 // Persistence port for high scores (Repository/DAO pattern)
 public interface ScoreRepository {
-	List<Integer> read() throws IOException;
-	void write(List<Integer> scores) throws IOException;
+    // Load all available scores (may be empty). Implementations should not return null.
+    List<Integer> read() throws IOException;
+    // Persist the provided list of scores (non-null). Implementations may overwrite the entire store.
+    void write(List<Integer> scores) throws IOException;
 }
-

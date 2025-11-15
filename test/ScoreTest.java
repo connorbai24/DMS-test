@@ -30,11 +30,11 @@ public class ScoreTest {
 		}
 	}
 
-	@Test
-	public void parsesAndSkipsInvalidLines() throws IOException {
-		Path p = writeTempFile("100", "", "abc", " 200 ", "  ", "300x", "400");
-		Score s = new Score(p.toString());
-		List<Integer> highs = s.getHighScores();
+    @Test
+    public void parsesAndSkipsInvalidLines() throws IOException {
+        Path p = writeTempFile("100", "", "abc", " 200 ", "  ", "300x", "400");
+        Score s = new Score(p.toString());
+        List<Integer> highs = s.getHighScores();
 		// Expect the valid integers in order of appearance, then zeros padded to 10
 		assertEquals(10, highs.size());
 		assertEquals(Integer.valueOf(100), highs.get(0));
@@ -42,8 +42,32 @@ public class ScoreTest {
 		assertEquals(Integer.valueOf(400), highs.get(2));
 		for (int i = 3; i < 10; i++) {
 			assertEquals(Integer.valueOf(0), highs.get(i));
-		}
-	}
+        }
+    }
+
+    @Test
+    public void diConstructorUsesRepository() throws IOException {
+        // Repo that provides preset values and records writes
+        class StubRepo implements ScoreRepository {
+            List<Integer> initial = Arrays.asList(7, 3);
+            List<Integer> lastWrite;
+            public List<Integer> read() { return new ArrayList<Integer>(initial); }
+            public void write(List<Integer> scores) { lastWrite = new ArrayList<Integer>(scores); }
+        }
+        StubRepo repo = new StubRepo();
+        Score s = new Score(repo);
+        // Preset values then padded to 10
+        List<Integer> highs = s.getHighScores();
+        assertEquals(Integer.valueOf(7), highs.get(0));
+        assertEquals(Integer.valueOf(3), highs.get(1));
+        assertEquals(10, highs.size());
+        // Add a score and ensure write called with sorted/trimmed list
+        s.addHighScore(100);
+        assertNotNull(repo.lastWrite);
+        assertEquals(10, repo.lastWrite.size());
+        assertEquals(Integer.valueOf(100), repo.lastWrite.get(0));
+    }
+
 
 	@Test
 	public void addHighScoreSortsTrimsAndPersists() throws IOException {
@@ -98,4 +122,3 @@ public class ScoreTest {
 		assertEquals(Integer.valueOf(10), highs.get(9));
 	}
 }
-
