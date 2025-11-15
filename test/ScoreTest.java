@@ -45,6 +45,44 @@ public class ScoreTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void constructorRejectsNullRepository() {
+        new Score((ScoreRepository) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void constructorRejectsNullFilename() {
+        new Score((String) null);
+    }
+
+    @Test
+    public void constructorHandlesNullLoadedList() {
+        class NullReadRepo implements ScoreRepository {
+            public List<Integer> read() { return null; }
+            public void write(List<Integer> scores) { /* no-op */ }
+        }
+        Score s = new Score(new NullReadRepo());
+        List<Integer> highs = s.getHighScores();
+        assertEquals(10, highs.size());
+        for (Integer v : highs) {
+            assertEquals(Integer.valueOf(0), v);
+        }
+    }
+
+    @Test
+    public void constructorConvertsNullEntriesToZero() {
+        class NullEntryRepo implements ScoreRepository {
+            public List<Integer> read() { return Arrays.asList(5, null, 3); }
+            public void write(List<Integer> scores) { /* no-op */ }
+        }
+        Score s = new Score(new NullEntryRepo());
+        List<Integer> highs = s.getHighScores();
+        assertEquals(Integer.valueOf(5), highs.get(0));
+        assertEquals(Integer.valueOf(0), highs.get(1));
+        assertEquals(Integer.valueOf(3), highs.get(2));
+        assertEquals(10, highs.size());
+    }
+
     @Test
     public void diConstructorUsesRepository() throws IOException {
         // Repo that provides preset values and records writes

@@ -24,8 +24,9 @@
 - Load images via `Picture.draw(g, "file.png", x, y)`; place files in `resources/images/`
 
 ## Testing Guidelines
-- JUnit tests added in `test/ScoreTest.java` covering `Score` parsing, sorting, top-N trimming, persistence, defensive copy, and IO error propagation
-- JUnit tests added in `test/FileScoreRepositoryTest.java` covering `FileScoreRepository` read/write happy paths, invalid input handling, and IO errors
+- JUnit tests added in `test/ScoreTest.java` covering `Score` parsing, sorting, top-N trimming, persistence, defensive copy, IO error propagation, constructor validation (null repository and null filename), null-loaded list handling, and null-entry conversion to zero
+- `Score` tests also cover constructor validation (throws on null repository)
+- JUnit tests added in `test/FileScoreRepositoryTest.java` covering `FileScoreRepository` read/write happy paths, invalid input handling (null/empty file path, null scores), IO errors, and exception messages
 - JUnit tests added in `test/ScoreRepositoryTest.java` with an in-memory stub that exercises the repository contract (round-trip, null handling, defensive copy)
 - If adding tests, use JUnit in `test/` and name `ClassNameTest.java`; focus on movement, collisions, and score updates
 

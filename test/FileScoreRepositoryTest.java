@@ -24,6 +24,16 @@ public class FileScoreRepositoryTest {
         new FileScoreRepository(null);
     }
 
+    @Test
+    public void ctorRejectsNullPathMessage() {
+        try {
+            new FileScoreRepository(null);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            assertEquals("file path must not be null/empty", ex.getMessage());
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void ctorRejectsEmptyPath() {
         new FileScoreRepository("");
@@ -54,6 +64,18 @@ public class FileScoreRepositoryTest {
         repo.write(null);
     }
 
+    @Test
+    public void writeRejectsNullListMessage() throws IOException {
+        Path p = tempFile();
+        FileScoreRepository repo = new FileScoreRepository(p.toString());
+        try {
+            repo.write(null);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            assertEquals("scores must not be null", ex.getMessage());
+        }
+    }
+
     @Test(expected = IOException.class)
     public void readThrowsOnMissingFile() throws IOException {
         FileScoreRepository repo = new FileScoreRepository("non-existent-" + System.nanoTime());
@@ -68,4 +90,3 @@ public class FileScoreRepositoryTest {
         repo.read();
     }
 }
-
