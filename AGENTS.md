@@ -44,8 +44,9 @@
 - `Player` (src/Player.java) - Abstract light-cycle; trail (`Line`s), boost/jump, alive state; ctors: `Player(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `getBoostsLeft()`, `accelerate()`, `jump()`, `startBoost()`, `boost()`, `draw(Graphics)`, `getAlive()`, `getPath()`, `crash(Intersection)`, `move()`, `addPlayers(Player[])`.
 - `PlayerHuman` (src/PlayerHuman.java) - Human-controlled; merges trail segments; ctors: `PlayerHuman(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `addPlayers(Player[])`, `move()`.
 - `PlayerAI` (src/PlayerAI.java) - Computer player; scans trails/edges, random boosts/turns; ctors: `PlayerAI(int randX, int randY, int velx, int vely, java.awt.Color color)`; methods: `addPlayers(Player[])`, `move()`, private `reactProximity()`.
-- `Shape` (src/Shape.java) - Drawable trail segment interface; methods: `draw(java.awt.Graphics)`, `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
-- `Line` (src/Shape.java) - Concrete straight segment used for trails; ctors: `Line(int x, int y, int x2, int y2)`; methods: `draw(java.awt.Graphics)`, `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
+- `Shape` (src/Shape.java) - Geometry-only interface for trail segments; methods: `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
+- `Line` (src/Line.java) - Immutable straight segment implementing `Shape`; ctors: `Line(int x, int y, int x2, int y2)`; methods: `isVertical()`, `getStartX()`, `getStartY()`, `getEndX()`, `getEndY()`.
+- `AwtLineDrawer` (src/AwtLineDrawer.java) - Rendering helper; methods: static `draw(Line, java.awt.Graphics)` draws a line segment.
 - `Intersection` (src/Intersection.java) - Collision result enum; constants: `NONE`, `UP`, `LEFT`, `DOWN`, `RIGHT`.
 - `Picture` (src/Picture.java) - Image helper; caches and loads from classpath `/images` (fallback to file); methods: static `draw(java.awt.Graphics g, String filepath, int x, int y)`.
 - `Score` (src/Score.java) - High-score domain/service; maintains top-10, sorts/trims, persists via repository; ctors: `Score(String filename)`, `Score(ScoreRepository repository)`; methods: `addHighScore(int) throws java.io.IOException`, `getHighScores()`.
