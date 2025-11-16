@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,8 +27,9 @@ public final class Picture {
 
 	// Simple LRU cache; synchronized wrapper for basic thread-safety
 	private static final Map<String, BufferedImage> cache =
-		Collections.synchronizedMap(new LinkedHashMap<String, BufferedImage>(16, 0.75f, true) {
-			private static final long serialVersionUID = 1L;
+		Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+			@Serial
+            private static final long serialVersionUID = 1L;
 			@Override
 			protected boolean removeEldestEntry(Map.Entry<String, BufferedImage> eldest) {
 				return size() > CACHE_CAPACITY;
@@ -36,7 +38,7 @@ public final class Picture {
 
 	/**
 	 * Draw an image.
-	 *
+	 * <p>
 	 * Note: First draw may perform I/O; subsequent draws hit the in-memory cache.
 	 *
 	 * @param g The graphics context in which to draw the image (ignored if null).
