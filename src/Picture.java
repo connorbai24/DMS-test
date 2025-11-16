@@ -1,7 +1,6 @@
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -44,24 +43,34 @@ public final class Picture {
 		}
 
 		try {
-			BufferedImage img;
-			if (cache.containsKey(filepath))
-				img = cache.get(filepath);
-			else {
-				img = null;
+			BufferedImage img = cache.get(filepath); // rely on null to mean "not cached"
+			if (img == null) {
+				// Not cached yet; attempt to load from classpath
 				InputStream is = Picture.class.getResourceAsStream(BASE_PATH + filepath);
 				if (is != null) {
-					img = ImageIO.read(is);
-				} else {
-					img = ImageIO.read(new File(filepath));
+					// Ensure the stream is properly closed
+					try (InputStream in = is) {
+						img = ImageIO.read(in);
+					}
+					// Cache only successfully decoded images (non-null)
+					if (img != null) {
+						cache.put(filepath, img);
+					}
 				}
-				cache.put(filepath, img);
 			}
+			// If image couldn't be loaded from classpath, do not draw
+			if (img == null) return;
 			g.drawImage(img, x, y, null);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
 	
+	/**
+	 * Clears the in-memory image cache. Primarily for tests or when assets change at runtime.
+	 */
+	public static void clearCache() {
+		cache.clear();
+	}
+	
 }
-

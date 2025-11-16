@@ -3,6 +3,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -96,6 +97,39 @@ public class PictureTest {
         assertTrue(Modifier.isPrivate(cache.getModifiers()));
         assertTrue(Modifier.isStatic(cache.getModifiers()));
         assertTrue(Modifier.isFinal(cache.getModifiers()));
+    }
+
+    @Test
+    public void drawMissingResourceDoesNothing() {
+        // a name that certainly does not exist in resources
+        String missing = "missing-" + System.nanoTime() + ".png";
+        BufferedImage canvas = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        int before = countNonZeroPixels(canvas);
+        Graphics g = canvas.getGraphics();
+        // should not throw and should not modify canvas
+        Picture.draw(g, missing, 0, 0);
+        int after = countNonZeroPixels(canvas);
+        assertEquals(before, after);
+    }
+
+    @Test
+    public void drawIgnoresExistingDiskFile() throws Exception {
+        // Create a real image on disk that is NOT on classpath under /images.
+        // With the previous fallback-to-file behavior this would draw something;
+        // after the change (classpath-only), it must not draw.
+        File tmp = File.createTempFile("PictureTest-", ".png");
+        tmp.deleteOnExit();
+        BufferedImage src = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB);
+        src.setRGB(0, 0, 0xFF00FF00); // one visible pixel
+        javax.imageio.ImageIO.write(src, "PNG", tmp);
+
+        BufferedImage canvas = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB);
+        int before = countNonZeroPixels(canvas);
+        Graphics g = canvas.getGraphics();
+        // Pass just the filename. If file-fallback existed, this would draw.
+        Picture.draw(g, tmp.getName(), 0, 0);
+        int after = countNonZeroPixels(canvas);
+        assertEquals("Classpath-only loader should ignore disk files not on classpath", before, after);
     }
 
     private static int countNonZeroPixels(BufferedImage img) {
