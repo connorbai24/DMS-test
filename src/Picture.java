@@ -11,12 +11,20 @@ import javax.imageio.ImageIO;
 /**
  * Provides methods to facilitate drawing images.
  */
-public class Picture {
+public final class Picture {
+
+	// Base classpath location for game images
+	private static final String BASE_PATH = "/images/";
+
+	// Utility class; prevent instantiation
+	private Picture() {
+		// no instances
+	}
 	
 	/**
 	 * Keep track of pictures that have already been drawn so that we don't have to load them every time.
 	 */
-	private static Map<String, BufferedImage> cache = new HashMap<String, BufferedImage>();
+	private static final Map<String, BufferedImage> cache = new HashMap<String, BufferedImage>();
 
 	/**
 	 * Draw an image.
@@ -27,13 +35,21 @@ public class Picture {
 	 * @param y The y-coordinate of where the upper-left corner of the image should be drawn.
 	 */
 	public static void draw(Graphics g, String filepath, int x, int y) {
+		// Basic argument validation for clearer failures
+		if (g == null) {
+			throw new IllegalArgumentException("Graphics must not be null");
+		}
+		if (filepath == null || filepath.isEmpty()) {
+			throw new IllegalArgumentException("filepath must not be null or empty");
+		}
+
 		try {
 			BufferedImage img;
 			if (cache.containsKey(filepath))
 				img = cache.get(filepath);
 			else {
 				img = null;
-				InputStream is = Picture.class.getResourceAsStream("/images/" + filepath);
+				InputStream is = Picture.class.getResourceAsStream(BASE_PATH + filepath);
 				if (is != null) {
 					img = ImageIO.read(is);
 				} else {
@@ -48,5 +64,4 @@ public class Picture {
 	}
 	
 }
-
 
